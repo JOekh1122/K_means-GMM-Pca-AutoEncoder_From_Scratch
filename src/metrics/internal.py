@@ -162,10 +162,10 @@ def calculate_wcss(X, labels, centroids):
 
 
 def calculate_gmm_metrics(X, log_likelihood, n_components, covariance_type):
-
+#Log-likelihood alone overfits
+#AIC (Akaike Information Criterion)->To fix the overfitting problem of log-likelihood.
     n_samples, n_features = X.shape
     
-    # 1. Count Parameters (k) based on covariance type rules
     # Weights parameters = k - 1
     # Means parameters = k * d
     n_params = (n_components - 1) + (n_components * n_features)
@@ -187,11 +187,18 @@ def calculate_gmm_metrics(X, log_likelihood, n_components, covariance_type):
         
     n_params += n_cov_params
     
-    # 2. Calculate Metrics
-    # BIC = k * ln(n) - 2 * ln(L)
+    # BIC = k * ln(n) - 2 * ln(L) ->BIC (Bayesian Information Criterion)
+    #it penalizes model complexity more heavily than AIC, 
+    # especially as the number of data points increases.
+    #N: number of samples,k: number of parameters
+    #Lower BIC = better model
+    #Penalty increases with dataset size
     bic = n_params * np.log(n_samples) - 2 * log_likelihood
     
-    # AIC = 2k - 2 * ln(L)
+
+    # AIC = 2k - 2 * ln(L) ->we want it to be low
+    #k->number of model parameters
+    #Penalizes model complexity linearly
     aic = 2 * n_params - 2 * log_likelihood
     
     return {

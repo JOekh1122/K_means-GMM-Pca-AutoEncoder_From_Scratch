@@ -5,7 +5,6 @@ def confusion_matrix_scratch(y_true, y_pred):
     n_classes = len(np.unique(y_true))
     n_clusters = len(np.unique(y_pred))
     
-    # Map labels to 0..N-1 integers just in case
     # This handles cases where labels might not be contiguous integers
     classes = np.unique(y_true)
     clusters = np.unique(y_pred)
@@ -14,7 +13,6 @@ def confusion_matrix_scratch(y_true, y_pred):
     
     for i, true_label in enumerate(classes):
         for j, pred_label in enumerate(clusters):
-            # Count intersection of True Label i AND Pred Label j
             mask = (y_true == true_label) & (y_pred == pred_label)
             cm[i, j] = np.sum(mask)
             
@@ -23,12 +21,9 @@ def confusion_matrix_scratch(y_true, y_pred):
 
 
 def purity_score_scratch(y_true, y_pred):
-
-    # Compute Contingency Matrix
+    #For each cluster, what is the dominant class
     cm = confusion_matrix_scratch(y_true, y_pred)
-    
-    # For each cluster (column), find the most frequent class (max row value)
-    # Sum these up and divide by total samples
+    #For each cluster (column), find the most frequent class (max row value)
     return np.sum(np.amax(cm, axis=0)) / np.sum(cm)
 
 
@@ -39,13 +34,12 @@ def entropy_scratch(labels):
     n_samples = len(labels)
     if n_samples == 0:
         return 0.0
-        
-    # Count frequency of each label
+    # Calculate class probabilities    
     _, counts = np.unique(labels, return_counts=True)
     probs = counts / n_samples
-    
-    # H(X) = - sum(p * log(p))
-    return -np.sum(probs * np.log(probs + 1e-10)) # 1e-10 for stability
+    #entropy=-sum p(x)log(p(x))
+    #we need it to be low
+    return -np.sum(probs * np.log(probs + 1e-10)) 
 
 
 
@@ -78,6 +72,8 @@ def normalized_mutual_information_scratch(y_true, y_pred):
                 
     # 3. Normalized MI
     return 2 * mi / (h_y + h_c)
+
+
 
 
 
