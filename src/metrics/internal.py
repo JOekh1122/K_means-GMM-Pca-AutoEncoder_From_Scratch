@@ -19,23 +19,31 @@ def calinski_harabasz_score_scratch(X, labels):
         n_k = cluster_points.shape[0]
         centroid = np.mean(cluster_points, axis=0)
         
-        # SS_B contribution: n_k * distance(centroid, global)^2
+        # SS_B : n_k * distance( cluster centroid, global centroid of dataset)^2
+        #measure of how far cluster centroids are from global centroid, we want it to be high
         ss_b += n_k * np.sum((centroid - global_center)**2)
         
-        # SS_W contribution: sum of distance(points, centroid)^2
+        # SS_W Compactness: sum of distance(points, centroid)^2
+        #measures how scattered the data points are inside their assigned cluster, we want it to be low
         ss_w += np.sum((cluster_points - centroid)**2)
         
     if ss_w == 0:
         return np.inf
         
     # Formula: (SS_B / (k - 1)) / (SS_W / (N - k))
+    #(N-k / k-1 ) penalize the score based on number of clusters
+    #we want score to be high because it tells us clusters are well separated and compact
     score = (ss_b / (n_clusters - 1)) / (ss_w / (n_samples - n_clusters))
     
     return score
 
 
 
-
+#Numerator is how scattered the points are within a cluster and called Intra-cluster distance w ana 3aizha tb2a low
+#Denominator is how far the clusters are from each other Inter-cluster distance w ana 3aizha tb2a high
+#3aizha el ratio yb2a low ==0
+# لكل كلاستر هجيب المسافه مابينه و مابين 
+# used to measure similarity between clusters
 def davies_bouldin_score_scratch(X, labels):
     unique_labels = np.unique(labels)
     n_clusters = len(unique_labels)
@@ -47,6 +55,7 @@ def davies_bouldin_score_scratch(X, labels):
     scatters = []
     
     for k in unique_labels:
+        # 
         cluster_points = X[labels == k]
         centroid = np.mean(cluster_points, axis=0)
         centroids.append(centroid)
@@ -73,12 +82,15 @@ def davies_bouldin_score_scratch(X, labels):
             if separation == 0:
                 ratio = 0
             else:
+                #rule= scatter_i(cluster 1) + scatter_j(cluster 2) / distance_between_centroids
+                # scatters: The average distance of all points in cluster to the cluster centroid.
+
                 ratio = (scatters[i] + scatters[j]) / separation
                 
             max_ratio = max(max_ratio, ratio)
             
         db_score += max_ratio
-        
+        #if score is high that means clusters are close to each other and scattered within themselves
     return db_score / n_clusters
 
 #هنا باخد نققطه و اقيس المسافه مابينها و بين كل النقط اللي معاها في نفس الكلاستر و اجيبلهم افريدج و هو ده a_i
@@ -136,6 +148,8 @@ def silhouette_score_scratch(X, labels):
 
 
 
+#calculates the sum of the squared distances between each data point and the centroid of its assigned cluster
+#we want it to be low because it indicates that data points are close to their cluster centroids,which means compact clusters.
 def calculate_wcss(X, labels, centroids):
     wcss = 0
     for i, point in enumerate(X):
