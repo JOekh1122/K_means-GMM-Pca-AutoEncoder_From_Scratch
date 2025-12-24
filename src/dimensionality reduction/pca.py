@@ -53,3 +53,12 @@ class PCA:
         # X: (N, K)
           #self.components.T: (K, D)
         return np.dot(X, self.components.T) + self.mean
+    
+    def get_explained_variance(self):
+        return self.explained_variances
+    
+    def mean_squared_reconstruction_error(self, X):
+        X_transformed = self.transform(X)
+        X_reconstructed = self.inverse_transform(X_transformed)
+        mse = np.mean((X - X_reconstructed) ** 2)
+        return mse
