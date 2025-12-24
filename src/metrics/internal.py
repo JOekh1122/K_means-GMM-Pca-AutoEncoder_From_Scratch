@@ -1,5 +1,5 @@
 import numpy as np
-def calinski_harabasz_score_scratch(X, labels):
+def calinski_harabasz_score_scratch(X, labels): #we want it to be high 
     n_samples = X.shape[0]
     unique_labels = np.unique(labels)
     n_clusters = len(unique_labels)
@@ -21,7 +21,7 @@ def calinski_harabasz_score_scratch(X, labels):
         
         # SS_B : n_k * distance( cluster centroid, global centroid of dataset)^2
         #measure of how far cluster centroids are from global centroid, we want it to be high
-        ss_b += n_k * np.sum((centroid - global_center)**2)
+        ss_b += n_k * np.sum((centroid - global_center)**2) #we 
         
         # SS_W Compactness: sum of distance(points, centroid)^2
         #measures how scattered the data points are inside their assigned cluster, we want it to be low
@@ -42,7 +42,7 @@ def calinski_harabasz_score_scratch(X, labels):
 #Numerator is how scattered the points are within a cluster and called Intra-cluster distance w ana 3aizha tb2a low
 #Denominator is how far the clusters are from each other Inter-cluster distance w ana 3aizha tb2a high
 #3aizha el ratio yb2a low ==0
-# لكل كلاستر هجيب المسافه مابينه و مابين 
+# همسك كل كلاستر احسب المسافه مابينه و مابين النقط اللي جواه و هعمل كده ل كلاستر تاني و اجمعهم و اقسمهم على المسافه مابين الاتنين كلاستر
 # used to measure similarity between clusters
 def davies_bouldin_score_scratch(X, labels):
     unique_labels = np.unique(labels)
@@ -79,7 +79,7 @@ def davies_bouldin_score_scratch(X, labels):
             # Distance between centroids
             separation = np.sqrt(np.sum((centroids[i] - centroids[j])**2))
             
-            if separation == 0:
+            if separation == 0: #if centroids are the same and to avoid division by zero
                 ratio = 0
             else:
                 #rule= scatter_i(cluster 1) + scatter_j(cluster 2) / distance_between_centroids

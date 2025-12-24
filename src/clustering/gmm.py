@@ -24,17 +24,23 @@ class GMM_Scratch:
         
         if self.covariance_type == 'full':
             #each covariance matrix is initialized to identity matrix (n_features, n_features)
+            #curvy decision boundary
             self.covariances = np.array([np.eye(n_features) for _ in range(self.n_components)])
             
         elif self.covariance_type == 'tied':
             #all components share the same covariance matrix initialized to identity (n_features, n_features)
+            #linear decision boundary
             self.covariances = np.eye(n_features)
             
         elif self.covariance_type == 'diagonal':
             #each covariance matrix is initialized to ones vector it only stores variances for each feature not covariances between features
+            #Decision Boundary: Quadratic (but restricted).
+
+            #Boundaries are curved, but the curves are aligned with the axes.
             self.covariances = np.ones((self.n_components, n_features))#(n_components, n_features)
             
         elif self.covariance_type == 'spherical':
+            #have same variance
             #each covariance is represented by a single variance value initialized to one (n_components,)
             self.covariances = np.ones(self.n_components)
 
@@ -63,7 +69,7 @@ class GMM_Scratch:
                 # formula = (x - mu).T @ inv_cov @ (x - mu) for each x
                 mahalanobis = np.sum(np.dot(diff, inv_cov) * diff, axis=1)
                 # constant term = -0.5 * (n_features * log(2π) + log|cov|)
-                const = -0.5 * (n_features * np.log(2 * np.pi) + np.log(det_cov))
+                const = -0.5 * (n_features * np.log(2 * np.pi) + np.log(det_cov))#distance to peak of gaussian
                 log_prob[:, k] = const - 0.5 * mahalanobis #subtract mahalanobis distance from constant term
                 
                 #All Gaussians share the same covariance matrix
@@ -76,6 +82,7 @@ class GMM_Scratch:
                 const = -0.5 * (n_features * np.log(2 * np.pi) + np.log(det_cov))
                 log_prob[:, k] = const - 0.5 * mahalanobis
              #here only variances are stored no covariances between features
+            
             elif self.covariance_type == 'diagonal':
                 var = self.covariances[k] + self.reg_covar
                 #calculate determinant of diagonal covariance matrix as product of variances
@@ -97,7 +104,7 @@ class GMM_Scratch:
         return log_prob
 
     def _e_step(self, X):
-        # log(πk​N(xi​∣μk​,Σk​))
+        # log(πk * ​N(xi​∣μk​,Σk​))
         weighted_log_prob = self._estimate_log_prob(X) + np.log(self.weights + 1e-10)
         #log(∑​π*​N(xi​∣μk​,Σk​))
         log_prob_norm = np.max(weighted_log_prob, axis=1, keepdims=True) + \
@@ -119,7 +126,7 @@ class GMM_Scratch:
         self.means = np.dot(responsibilities.T, X) / weights_sum[:, np.newaxis]
         
         if self.covariance_type == 'full':
-            
+            #covariance matrix= (responsibilities.T * (X - mean)).T⋅(X - mean) / ∑​γik​
             for k in range(self.n_components):
                 diff = X - self.means[k]
                 weighted_diff = responsibilities[:, k, np.newaxis] * diff
@@ -127,6 +134,7 @@ class GMM_Scratch:
                 self.covariances[k] = cov
                 
         elif self.covariance_type == 'tied':
+            #shared covariance matrix= ∑​γik​ * (X - mean_k).T⋅(X - mean_k) / n_samples
             avg_cov = np.zeros((n_features, n_features))
             for k in range(self.n_components):
                 diff = X - self.means[k]
@@ -135,12 +143,14 @@ class GMM_Scratch:
             self.covariances = avg_cov / n_samples
             
         elif self.covariance_type == 'diagonal':
+           ##covariance matrix= diag( (responsibilities.T * (X - mean)^2) / ∑​γik​ ) 
             for k in range(self.n_components):
                 diff = X - self.means[k]
                 avg_sq_diff = np.sum(responsibilities[:, k, np.newaxis] * (diff ** 2), axis=0)
                 self.covariances[k] = avg_sq_diff / weights_sum[k]
                 
         elif self.covariance_type == 'spherical':
+            #covariance = responsibilities.T * ||X - mean||^2 / (∑​γik​ * n_features)
             for k in range(self.n_components):
                 diff = X - self.means[k]
                 avg_sq_dist = np.sum(responsibilities[:, k] * np.sum(diff ** 2, axis=1))
@@ -149,15 +159,17 @@ class GMM_Scratch:
     def fit(self, X):
         self._initialize_parameters(X)
         self.log_likelihood_history = []
-        
+       # EM algorithm
         for i in range(self.max_iter):
+            #E step
             responsibilities, log_prob_norm = self._e_step(X)
-            
+            #calculate log-likelihood
             current_log_likelihood = np.sum(log_prob_norm)
             self.log_likelihood_history.append(current_log_likelihood)
             
+            #M step
             self._m_step(X, responsibilities)
-            
+#If the score improved by less than self.tol(0.001)compared to the last loop, the model has stopped learning and converged.
             if i > 0 and abs(current_log_likelihood - self.log_likelihood_history[-2]) < self.tol:
                 break
                 
