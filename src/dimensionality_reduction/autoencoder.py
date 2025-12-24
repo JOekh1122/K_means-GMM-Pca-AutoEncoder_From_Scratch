@@ -1,6 +1,7 @@
 import numpy as np
+import matplotlib.pyplot as plt
 def relu(z): return np.maximum(0, z)
-def relu_deriv(z): return (z > 0).astype(float)
+def relu_deriv(z): return (z > 0).astype(float)  # 1 where z > 0, else 0 
 
 def sigmoid(z): return 1 / (1 + np.exp(-np.clip(z, -500, 500)))
 def sigmoid_deriv(z): 
@@ -20,32 +21,42 @@ class AutoEncoder:
         self.W = []
         self.b = []
         self.activations = activations
+        self.losses = []  # store training loss
+
 
         for i in range(self.L):
             self.W.append(np.random.randn(layer_sizes[i], layer_sizes[i+1]) * 0.01)
             self.b.append(np.zeros((1, layer_sizes[i+1])))
 
-    def forward(self, X):
-        A = X
-        self.cache = [(X, None)]
 
+#Z¹ = A⁰ W¹ + b¹
+#A¹ = a¹(Z¹)
+
+    def forward(self, X):
+        A = X  # A0
+        self.cache = [(X, None)]   #  [(A⁰, None), (A¹, Z¹), (A², Z²), ...] 
+# a(wx + b) 
         for i in range(self.L):
-            Z = A @ self.W[i] + self.b[i]
-            A = self.activations[i][0](Z)
+            Z = A @ self.W[i] + self.b[i]  # a prev @ W + b
+            A = self.activations[i][0](Z)  # a now 
             self.cache.append((A, Z))
 
         return A
 
     def backward(self, X, X_hat):
-        m = X.shape[0]
-        dA = 2 * (X_hat - X) / m
+        m = X.shape[0]  # number of examples    
+        dA = 2 * (X_hat - X) / m # mean squared error derivative
 
         for i in reversed(range(self.L)):
             A_prev, _ = self.cache[i]
             _, Z = self.cache[i+1]
 
+           #  cache[i]     = (A^(i),   none or Z)
+           # cache[i + 1] = (A^(i+1), Z^(i+1))
+
+
             dZ = dA * self.activations[i][1](Z)
-            dW = A_prev.T @ dZ + self.l2 * self.W[i]
+            dW = A_prev.T @ dZ + self.l2 * self.W[i] # λW
             db = np.sum(dZ, axis=0, keepdims=True)
 
             dA = dZ @ self.W[i].T
@@ -58,13 +69,35 @@ class AutoEncoder:
             if epoch > 0 and epoch % step_size == 0:
                 self.lr *= gamma
 
-            perm = np.random.permutation(len(X))
+            perm = np.random.permutation(len(X))  # shuffle data
             X = X[perm]
+
+            epoch_loss = 0.0
+
+
+            # Shuffling ensures:
+                 #Each batch is different every epoch
+                 # Better generalization
 
             for i in range(0, len(X), batch_size):
                 batch = X[i:i+batch_size]
                 X_hat = self.forward(batch)
+                batch_loss = np.mean((batch - X_hat) ** 2)
+                epoch_loss += batch_loss * len(batch)
                 self.backward(batch, X_hat)
+            epoch_loss /= len(X)
+            self.losses.append(epoch_loss)
+
+
+    
+    def plot_training_loss(self):
+        plt.figure()
+        plt.plot(self.losses)
+        plt.xlabel("Epoch")
+        plt.ylabel("Reconstruction Loss (MSE)")
+        plt.title("AutoEncoder Training Loss Curve")
+        plt.grid(True)
+        plt.show() 
 
 
 
@@ -79,3 +112,9 @@ class AutoEncoder:
 
 # 3. Initialize
 #model = AutoEncoder(layer_sizes=my_layers, activations=my_activations)
+
+
+
+
+# Forward  : A_prev -> Z -> A
+# Backward : dA -> dZ -> dW, db -> dA_prev
