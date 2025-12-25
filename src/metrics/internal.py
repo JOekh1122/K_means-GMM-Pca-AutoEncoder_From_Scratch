@@ -126,7 +126,7 @@ def silhouette_score_scratch(X, labels):
         else:
             a_i = np.mean(dist_matrix[i][mask_same])
             
-#we need a samll and b bigger
+        #we need a samll and b bigger
         # Calculate b_i: minimum mean distance to points in other clusters    
         b_i = np.inf
         
