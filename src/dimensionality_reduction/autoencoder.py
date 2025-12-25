@@ -25,7 +25,7 @@ class AutoEncoder:
 
 
         for i in range(self.L):
-            self.W.append(np.random.randn(layer_sizes[i], layer_sizes[i+1]) * 0.01)
+            self.W.append(np.random.randn(layer_sizes[i], layer_sizes[i+1]) * 0.1)
             self.b.append(np.zeros((1, layer_sizes[i+1])))
 
 
@@ -64,7 +64,7 @@ class AutoEncoder:
             self.W[i] -= self.lr * dW
             self.b[i] -= self.lr * db
 
-    def train(self, X, epochs=100, batch_size=32, step_size=30, gamma=0.7):
+    def train(self, X, epochs=100, batch_size=32, step_size=50, gamma=0.8):
         for epoch in range(epochs):
             if epoch > 0 and epoch % step_size == 0:
                 self.lr *= gamma
